@@ -1,0 +1,3 @@
+compilate
+
+npm start
