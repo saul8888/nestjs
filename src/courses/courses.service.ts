@@ -5,6 +5,7 @@ import { CourseRepository } from './course.repository';
 import { GetFilterDto } from './dto/get-filter';
 import { AddCourse } from './dto/add-course';
 import { CourseStatus } from './new.enum/status';
+import { User } from 'src/auth/users/user.entity';
 
 @Injectable()
 export class CoursesService {
@@ -15,20 +16,23 @@ export class CoursesService {
 
     async getCourses(
         filterDto: GetFilterDto,
+        user: User,
     ):Promise<Course[]>{
-        return this.courseRepository.getCourse(filterDto)
+        return this.courseRepository.getCourse(filterDto, user)
     }
 
     async addCourse(
         addCourseDto: AddCourse,
+        user: User,
     ):Promise<Course>{
-        return this.courseRepository.addCourse(addCourseDto)
+        return this.courseRepository.addCourse(addCourseDto, user)
     }
 
     async getById(
-        id:number
+        id: number,
+        user: User,
     ):Promise<Course>{
-        const found = await this.courseRepository.findOne({ where: { id} });
+        const found = await this.courseRepository.findOne({ where: { id, userId: user.id } });
         
         if (!found) {
             throw new NotImplementedException(`Course with ID "${id}" not found`);
@@ -40,8 +44,9 @@ export class CoursesService {
     async updateStatus(
             id: number, 
             status: CourseStatus,
+            user: User,
         ):Promise<Course>{
-            const course = await this.getById(id)
+            const course = await this.getById(id, user)
             course.status = status
             await course.save()
             return course
@@ -49,13 +54,14 @@ export class CoursesService {
 
     async deleteCourse(
         id: number,
+        user: User,
     ):Promise<Course>{
-        const course = await this.getById(id)
-        const result = await this.courseRepository.delete({id})
+        const course = await this.getById(id, user)
+        const result = await this.courseRepository.delete({ id, userId: user.id })
 
         if (result.affected === 0) {
             throw new NotFoundException(`course with ID "${id}" not found`);
-          }
+        }
         
         return course
     }
